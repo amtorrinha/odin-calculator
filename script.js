@@ -4,8 +4,10 @@ const SUB_OP = "-";
 const MULT_OP = "*";
 const DIV_OP = "/";
 const DECIMAL_POINT = ".";
+const NEGATIVE_POSITIVE = "+/-";
+const PERCENTAGE = "%";
 const ZERO = "0";
-const MEME = "u tried bro";
+const MEME = "Nice try, bud!";
 
 let firstNum = ZERO;
 let operator;
@@ -21,7 +23,6 @@ let multiply = (numA, numB) => numA * numB;
 let divide = (numA, numB) => numA / numB;
 
 let operate = (operator, numA, numB) => {
-    console.log("OPERATING " + numA + operator + numB);
     let operation;
     switch(String(operator)) {
         case SUM_OP:
@@ -42,39 +43,76 @@ let operate = (operator, numA, numB) => {
 };
 
 let computeNumber = (number) => {
-    console.log("Computing Number " + number);
-    console.log("OPERATION " + operator);
-    let updatedDisplay = '';
+    let updatedDisplay;
+    if ((firstNum && !secondNum && !operator && firstNum.length == 16) || 
+            (secondNum && secondNum.length == 16)) return; // calculator display digit limit reached
+    if (number === PERCENTAGE) {
+        updatedDisplay = computePercentage();
+        if (updatedDisplay) updateDisplay(updatedDisplay);
+        return;
+    }
+    if (number === NEGATIVE_POSITIVE) {
+        updatedDisplay = computeNegative();
+        if (updatedDisplay) updateDisplay(updatedDisplay);
+        return;
+    }
     if (!operator && resultNum) { // previous result isn't the first number
         firstNum = undefined;
         resultNum = undefined;
     }
     if (!firstNum || firstNum == ZERO) { // new first number
-        console.log("New First Number");
         if (number == DECIMAL_POINT) firstNum = ZERO + number;
         else firstNum = number;
         updatedDisplay = firstNum;
     } else {
         if (!operator) { // no operator yet, so another digit for first number
+            if (number == DECIMAL_POINT && firstNum.indexOf(DECIMAL_POINT) > -1) return; // ignores if already existing decimal point
             firstNum += number;
             updatedDisplay = firstNum;
         } else {
             if (!secondNum) { // new second number
-                console.log("New Second Number");
                 if (number == DECIMAL_POINT) secondNum = ZERO + number;
                 else secondNum = number;
                 updatedDisplay = secondNum;
             } else { // new digit for second number
+                if (number === DECIMAL_POINT && secondNum.indexOf(DECIMAL_POINT) > -1) return;
                 secondNum += number;
                 updatedDisplay = secondNum;
             }
         }
     }
-    updateDisplay(updatedDisplay);
+    if(updatedDisplay) updateDisplay(updatedDisplay);
+};
+
+let computePercentage = () => {
+    if (secondNum) {
+        secondNum = Number(secondNum) / 100;
+        return secondNum;
+    } else if (firstNum) {
+        firstNum = Number(firstNum) / 100;
+        return firstNum;
+    }
+};
+
+let computeNegative = () => { // adds or remove negative symbol if conditions are met
+    if (secondNum) {
+        if (secondNum[0] === SUB_OP) {
+            secondNum = secondNum.slice(1);
+        } else {
+            secondNum = SUB_OP + secondNum;
+        }
+        return secondNum;
+    } else if (firstNum) {
+        if (firstNum[0] === SUB_OP) {
+            firstNum = firstNum.slice(1);
+        } else {
+            firstNum = SUB_OP + firstNum;
+        }
+        return firstNum;
+    }
 };
 
 let computeOperator = (newOperator) => {
-    console.log("COMPUTING OPERATOR " + firstNum + " operator " + secondNum);
     if (!operator) {
         operator = newOperator;
     } else {
@@ -107,11 +145,7 @@ let computeOperation = (newChainOperator = undefined) => {
     operator = newChainOperator; // new operator may appear for a chain operation
 };
 
-let updateDisplay = (update) => {
-    display.innerHTML = update;
-    console.log("Updated HTML Display");
-    console.log(display.innerHTML);
-};
+let updateDisplay = (update) => display.innerHTML = update;
 
 let clearDisplay = () => {
     secondNum = undefined;
@@ -131,6 +165,7 @@ const operationBtns = document.querySelectorAll('.operation-btn');
 operationBtns.forEach((btn) => {
     btn.addEventListener('click', (e) => computeOperator(e.target.innerHTML));
 });
+
 const equalsBtn = document.querySelector('.equals-btn');
 equalsBtn.addEventListener('click', (e) => computeOperation());
 const clearBtn = document.querySelector('.clear-btn');
